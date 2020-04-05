@@ -323,7 +323,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 				Processes.Add(new ProcessModel(p));
 			}
 			//new Thread(RefreshProcesses).Start();
-			//new Thread(RefreshProcessMeta).Start();
+			new Thread(RefreshProcessMeta).Start();
 			try
 			{
 				Modules = ChosenProcess.CurrentProcess.Modules;
@@ -349,7 +349,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			{
 				foreach (ProcessModel process in Processes)
 					process.Refresh();
-				Processes = Processes;
+				Processes = new ObservableCollection<ProcessModel>(Processes);
 				Thread.Sleep(2000);
 			}
 		}
@@ -358,8 +358,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 		{
 			while (true)
 			{
-				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>();
-				int a = 0;
+				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>(Processes);
 				foreach (Process p in Process.GetProcesses())
 				{
 					ProcessModel tempProcess = new ProcessModel(p);

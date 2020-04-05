@@ -1,8 +1,8 @@
 ﻿
 using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Management;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.Models
 {
@@ -11,7 +11,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
         #region Fields
         private PerformanceCounter _ramCounter;
         private PerformanceCounter _cpuCounter;
-       // private static PerformanceCounter _deviceRam = new PerformanceCounter("Mono Memory", "Total Physical Memory");
+        private double _deviceRam;
         private Process _currentProcess;
         private int _id;
         private string _name;
@@ -195,18 +195,24 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
             User = Environment.UserName;
             try
             {
-               
-               // Thread.Sleep(100);
                 Cpu = _cpuCounter.NextValue() / Environment.ProcessorCount;
             }
             catch {}
             try
             {
+                var memoryValues = new ManagementObjectSearcher("select * from Win32_OperatingSystem").Get().Cast<ManagementObject>().Select(mo => new
+                {
+                    TotalVisibleMemorySize = Double.Parse(mo["TotalVisibleMemorySize"].ToString())
+                }).FirstOrDefault();
                 Ram = (float)Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
-                //RamPercent = (float)Math.Round(((double)(_ramCounter.RawValue) / _deviceRam.RawValue) * 100, 1);
+               
+               if (memoryValues != null)
+                {
+                    _deviceRam = memoryValues.TotalVisibleMemorySize;
+                    RamPercent = (Ram / _deviceRam) * 100;
+                }
             }
             catch { }
-           // RamPercent = Ram * 100 / (DeviceRAM/1024/1024);
 
         }
         
@@ -214,19 +220,23 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
         {
              try
              {
-               //  Ram /= 1024;
-             }
-             catch
+                Ram = (float)Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
+
+                if (_deviceRam != 0)
+                {
+                    RamPercent = (Ram / _deviceRam) * 100;
+                }
+            }
+            catch
              {
              }
 
              try
              {
 
-              // CpuUsageForProcess();
-             }
+                Cpu = _cpuCounter.NextValue() / Environment.ProcessorCount;
+            }
              catch { }
-           // Ram = (float)Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
             IsActive = CurrentProcess.Responding;
             Threads = CurrentProcess.Threads.Count;
 
