@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 {
@@ -45,28 +46,8 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			}
 			set
 			{
-
-				int tempId = -1;
-				if (ChosenProcess != null)
-				{
-					tempId = ChosenProcess.Id;
-				}
 				_processes = value;
-				if (_sortingType != -1)
-				{
-					SortImplementation(_sortingType);
-				}
-				if (tempId != -1)
-				{
-					foreach (ProcessModel pm in _processes)
-						if (pm.Id == tempId)
-						{
-							ChosenProcess = pm;
-							break;
-						}
-				}
 				OnPropertyChanged();
-				ChosenProcess = ChosenProcess;
 
 			}
 		}
@@ -161,7 +142,6 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 
 		private async void StopCommandImplementation(object obj)
 		{
-			bool happen = false;
 			LoaderManager.Instance.ShowLoader();
 			await Task.Run(() =>
 			{
@@ -173,7 +153,11 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 						
 						
 						ChosenProcess.CurrentProcess.Kill();
-						happen = true;
+						StationManager.DeleteProcess(ref _chosenProcess);
+						StationManager.RefreshProcesses();
+						ChosenProcess = null;
+						Processes = new ObservableCollection<ProcessModel>(StationManager.Processes);
+
 
 					}
 				}
@@ -183,11 +167,6 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 				}
 
 			});
-			if (happen)
-			{
-				Processes.Remove(ChosenProcess);
-				ChosenProcess = null;
-			}
 			LoaderManager.Instance.HideLoader();
 		}
 
@@ -274,73 +253,13 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			}
 		}
 
-		private async void SortImplementation( int i)
+		private void SortImplementation( int i)
 		{
-			_sortingType = i;
 			LoaderManager.Instance.ShowLoader();
-			await Task.Run(() =>
-			{
-				OrderedParallelQuery<ProcessModel> sortedProsesses;
-				switch (i)
-				{
-					case 0:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.Id
-										select p;
-						break;
-					case 1:
-						sortedProsesses = from p in _processes.AsParallel()
-										orderby p.Name.ToLower()
-										select p;
-						break;
-					case 2:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.Cpu
-										select p;
-						break;
-					case 3:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.RamPercent
-										select p;
-						break;
-					case 4:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.Ram
-										select p;
-						break;
-					case 5:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.Threads
-										select p;
-						break;
-					case 6:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.Path.ToLower()
-										select p;
-						break;
-					case 7:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.User.ToLower()
-										  select p;
-						break;
-					case 8:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.StartTime
-										  select p;
-						break;
-					case 9:
-						sortedProsesses = from p in _processes.AsParallel()
-										  orderby p.IsActive
-										select p;
-						break;
-					default:
-						LoaderManager.Instance.HideLoader();
-						return;
-
-				}
-				Processes = new ObservableCollection<ProcessModel>(sortedProsesses);
-
-			});
+			StationManager.SortingType = i;
+			StationManager.SortProcesses();
+			_sortingType = i;
+			Processes = new ObservableCollection<ProcessModel>(StationManager.Processes);
 			LoaderManager.Instance.HideLoader();
 		}
 
@@ -354,20 +273,28 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 				Processes.Add(new ProcessModel(p));
 			}
 			new Thread(RefreshProcesses) { IsBackground = true }.Start();
-		}
+	}
+		
 
 
 		private void RefreshProcesses(object obj)
 		{
 			while (true)
 			{
-				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>();
-				Process[] pr = Process.GetProcesses();
-				foreach (Process p in pr)
+				StationManager.RefreshProcesses();
+				Processes = new ObservableCollection<ProcessModel>(StationManager.Processes);
+
+				if (ChosenProcess != null)
 				{
-					temp.Add(new ProcessModel(p));
+					var temp = ChosenProcess.Id;
+					foreach (var p in Processes)
+					{
+						if (p.Id != temp) continue;
+						ChosenProcess = p;
+						break;
+					}
 				}
-				Processes = temp;
+				Thread.Sleep(2000);
 			}
 		}
 

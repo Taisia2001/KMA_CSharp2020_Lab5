@@ -1,4 +1,5 @@
-﻿using KMA.ProgrammingInCSharp2020.Lab5.ViewModels;
+﻿using KMA.ProgrammingInCSharp2020.Lab5.Tools.Managers;
+using KMA.ProgrammingInCSharp2020.Lab5.ViewModels;
 using System.Windows.Controls;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.Views
@@ -11,6 +12,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Views
         public ProcessListView()
         {
             InitializeComponent();
+            StationManager.Initialize();
             DataContext = new ProcessListViewModel();
         }
     }

@@ -101,7 +101,14 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
         {
             get
             {
-                return Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1); ;
+                try
+                {
+                    return Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
+                }
+                catch
+                {
+                    return 0;
+                }
             }
         }
         public double Cpu
