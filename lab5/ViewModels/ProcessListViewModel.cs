@@ -45,24 +45,29 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			}
 			set
 			{
-				int temp = -1;
+
+				int tempId = -1;
 				if (ChosenProcess != null)
-					temp = ChosenProcess.Id;
-				_processes = value;
-				if(temp != -1)
 				{
-					foreach(ProcessModel pm in _processes)
-						if (pm.Id == temp)
+					tempId = ChosenProcess.Id;
+				}
+				_processes = value;
+				if (_sortingType != -1)
+				{
+					SortImplementation(_sortingType);
+				}
+				if (tempId != -1)
+				{
+					foreach (ProcessModel pm in _processes)
+						if (pm.Id == tempId)
 						{
 							ChosenProcess = pm;
 							break;
 						}
 				}
-				if (_sortingType != -1)
-				{
-					SortImplementation(_sortingType);
-				}
 				OnPropertyChanged();
+				ChosenProcess = ChosenProcess;
+
 			}
 		}
 		public ProcessModel ChosenProcess
@@ -349,24 +354,8 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 				Processes.Add(new ProcessModel(p));
 			}
 			new Thread(RefreshProcesses) { IsBackground = true }.Start();
-			try
-			{
-				Modules = ChosenProcess.CurrentProcess.Modules;
-			}
-			catch
-			{
-				Modules = null;
-			}
-			try
-			{
-				Threads = ChosenProcess.CurrentProcess.Threads;
-
-			}
-			catch
-			{
-				Threads = null;
-			}
 		}
+
 
 		private void RefreshProcesses(object obj)
 		{

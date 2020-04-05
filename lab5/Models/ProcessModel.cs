@@ -1,9 +1,7 @@
-﻿
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Management;
-using System.Threading;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.Models
 {

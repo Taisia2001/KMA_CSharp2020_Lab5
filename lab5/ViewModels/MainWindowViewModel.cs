@@ -1,8 +1,5 @@
 ﻿using KMA.ProgrammingInCSharp2020.Lab5.Tools;
 using KMA.ProgrammingInCSharp2020.Lab5.Tools.Managers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
