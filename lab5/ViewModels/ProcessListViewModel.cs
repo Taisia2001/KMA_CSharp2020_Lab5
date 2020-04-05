@@ -19,7 +19,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 		private ObservableCollection<ProcessModel> _processes;
 		private ProcessModuleCollection _modules;
 		private ProcessThreadCollection _threads;
-		private int _sortingType;
+		private int _sortingType = -1;
 		#endregion
 		#region Commands
 		private RelayCommand<object> _openCommand;
@@ -45,7 +45,23 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			}
 			set
 			{
+				int temp = -1;
+				if (ChosenProcess != null)
+					temp = ChosenProcess.Id;
 				_processes = value;
+				if(temp != -1)
+				{
+					foreach(ProcessModel pm in _processes)
+						if (pm.Id == temp)
+						{
+							ChosenProcess = pm;
+							break;
+						}
+				}
+				if (_sortingType != -1)
+				{
+					SortImplementation(_sortingType);
+				}
 				OnPropertyChanged();
 			}
 		}
@@ -259,59 +275,63 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			LoaderManager.Instance.ShowLoader();
 			await Task.Run(() =>
 			{
-				IOrderedEnumerable<ProcessModel> sortedProsesses;
+				OrderedParallelQuery<ProcessModel> sortedProsesses;
 				switch (i)
 				{
 					case 0:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.Id
 										select p;
 						break;
 					case 1:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										orderby p.Name.ToLower()
 										select p;
 						break;
 					case 2:
-						sortedProsesses = from p in _processes
-										orderby p.Cpu
+						sortedProsesses = from p in _processes.AsParallel()
+										  orderby p.Cpu
 										select p;
 						break;
 					case 3:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.RamPercent
 										select p;
 						break;
 					case 4:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.Ram
 										select p;
 						break;
 					case 5:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.Threads
 										select p;
 						break;
 					case 6:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.Path.ToLower()
 										select p;
 						break;
 					case 7:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.User.ToLower()
 										  select p;
 						break;
 					case 8:
-						sortedProsesses = from p in _processes
+						sortedProsesses = from p in _processes.AsParallel()
 										  orderby p.StartTime
 										  select p;
 						break;
-					default:
-						sortedProsesses = from p in _processes
-										orderby p.IsActive
+					case 9:
+						sortedProsesses = from p in _processes.AsParallel()
+										  orderby p.IsActive
 										select p;
 						break;
+					default:
+						LoaderManager.Instance.HideLoader();
+						return;
+
 				}
 				Processes = new ObservableCollection<ProcessModel>(sortedProsesses);
 
@@ -353,12 +373,12 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			while (true)
 			{
 				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>();
-				foreach (Process p in Process.GetProcesses())
+				Process[] pr = Process.GetProcesses();
+				foreach (Process p in pr)
 				{
 					temp.Add(new ProcessModel(p));
 				}
 				Processes = temp;
-				SortImplementation(_sortingType);
 			}
 		}
 
