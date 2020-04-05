@@ -19,6 +19,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 		private ObservableCollection<ProcessModel> _processes;
 		private ProcessModuleCollection _modules;
 		private ProcessThreadCollection _threads;
+		private int _sortingType;
 		#endregion
 		#region Commands
 		private RelayCommand<object> _openCommand;
@@ -139,6 +140,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 
 		private async void StopCommandImplementation(object obj)
 		{
+			bool happen = false;
 			LoaderManager.Instance.ShowLoader();
 			await Task.Run(() =>
 			{
@@ -148,19 +150,23 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 							MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
 					{
 						
-						Processes.Remove(ChosenProcess);
+						
 						ChosenProcess.CurrentProcess.Kill();
-						ChosenProcess = null;
+						happen = true;
 
 					}
 				}
 				catch (Exception e)
 				{
-					MessageBox.Show(e.ToString(), "Fail");
-					//MessageBox.Show("Could not close this process", "Fail");
+					MessageBox.Show("Could not close this process", "Fail");
 				}
 
 			});
+			if (happen)
+			{
+				Processes.Remove(ChosenProcess);
+				ChosenProcess = null;
+			}
 			LoaderManager.Instance.HideLoader();
 		}
 
@@ -169,7 +175,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortById ?? (_sortById = new RelayCommand<object>(o =>
-							   SortImplementation(o, 0)));
+							   SortImplementation(0)));
 			}
 		}
 		public RelayCommand<object> SortByName
@@ -177,7 +183,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByName ?? (_sortByName = new RelayCommand<object>(o =>
-						   SortImplementation(o, 1)));
+						   SortImplementation(1)));
 			}
 		}
 		
@@ -186,7 +192,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByCpu ?? (_sortByCpu= new RelayCommand<object>(o =>
-						   SortImplementation(o, 2)));
+						   SortImplementation(2)));
 			}
 		}
 		public RelayCommand<object> SortByRamPercent
@@ -194,7 +200,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByRamPercent ?? (_sortByRamPercent = new RelayCommand<object>(o =>
-						   SortImplementation(o, 3)));
+						   SortImplementation(3)));
 			}
 		}
 		public RelayCommand<object> SortByRam
@@ -202,7 +208,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByRam ?? (_sortByRam = new RelayCommand<object>(o =>
-						   SortImplementation(o, 4)));
+						   SortImplementation(4)));
 			}
 		}
 		public RelayCommand<object> SortByThreads
@@ -210,7 +216,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByThreads ?? (_sortByThreads = new RelayCommand<object>(o =>
-						   SortImplementation(o, 5)));
+						   SortImplementation(5)));
 			}
 		}
 		public RelayCommand<object> SortByPath
@@ -218,7 +224,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByPath ?? (_sortByPath = new RelayCommand<object>(o =>
-						   SortImplementation(o, 6)));
+						   SortImplementation(6)));
 			}
 		}
 		public RelayCommand<object> SortByUser
@@ -226,7 +232,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByUser ?? (_sortByUser = new RelayCommand<object>(o =>
-						   SortImplementation(o, 7)));
+						   SortImplementation(7)));
 			}
 		}
 		
@@ -235,7 +241,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByStartTime ?? (_sortByStartTime = new RelayCommand<object>(o =>
-						   SortImplementation(o, 8)));
+						   SortImplementation( 8)));
 			}
 		}
 		public RelayCommand<object> SortByIsActive
@@ -243,12 +249,13 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			get
 			{
 				return _sortByIsActive ?? (_sortByIsActive = new RelayCommand<object>(o =>
-						   SortImplementation(o, 9)));
+						   SortImplementation( 9)));
 			}
 		}
 
-		private async void SortImplementation(object o, int i)
+		private async void SortImplementation( int i)
 		{
+			_sortingType = i;
 			LoaderManager.Instance.ShowLoader();
 			await Task.Run(() =>
 			{
@@ -317,13 +324,11 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 		public ProcessListViewModel()
 		{
 			Processes = new ObservableCollection<ProcessModel>();
-			Process[] processes = System.Diagnostics.Process.GetProcesses();
-			foreach (Process p in processes)
+			foreach (Process p in Process.GetProcesses())
 			{
 				Processes.Add(new ProcessModel(p));
 			}
-			//new Thread(RefreshProcesses).Start();
-			new Thread(RefreshProcessMeta).Start();
+			new Thread(RefreshProcesses) { IsBackground = true }.Start();
 			try
 			{
 				Modules = ChosenProcess.CurrentProcess.Modules;
@@ -343,34 +348,17 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 			}
 		}
 
-		private void RefreshProcessMeta(object obj)
-		{
-			while (true)
-			{
-				foreach (ProcessModel process in Processes)
-					process.Refresh();
-				Processes = new ObservableCollection<ProcessModel>(Processes);
-				Thread.Sleep(2000);
-			}
-		}
-
 		private void RefreshProcesses(object obj)
 		{
 			while (true)
 			{
-				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>(Processes);
+				ObservableCollection<ProcessModel> temp = new ObservableCollection<ProcessModel>();
 				foreach (Process p in Process.GetProcesses())
 				{
-					ProcessModel tempProcess = new ProcessModel(p);
-					temp.Add(tempProcess);
-					//if (ChosenProcess != null && tempProcess.Id == ChosenProcess.Id) ;
-						//a = temp.IndexOf(tempProcess);
-					
+					temp.Add(new ProcessModel(p));
 				}
-				ProcessModel t = ChosenProcess;
 				Processes = temp;
-				//ChosenProcess = temp.;
-				Thread.Sleep(2000);
+				SortImplementation(_sortingType);
 			}
 		}
 
