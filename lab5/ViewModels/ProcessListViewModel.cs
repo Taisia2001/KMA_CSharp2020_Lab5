@@ -5,11 +5,9 @@ using KMA.ProgrammingInCSharp2020.Lab5.Tools.MVVM;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 {
@@ -294,7 +292,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 						break;
 					}
 				}
-				Thread.Sleep(2000);
+				//Thread.Sleep(2000);
 			}
 		}
 
