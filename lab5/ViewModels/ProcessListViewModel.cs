@@ -148,7 +148,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 							MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
 					{
 						
-						Processes.Remove(Processes.Where(i => i.Id == ChosenProcess.Id).Single());
+						Processes.Remove(ChosenProcess);
 						ChosenProcess.CurrentProcess.Kill();
 						ChosenProcess = null;
 
@@ -257,7 +257,7 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.ViewModels
 				{
 					case 0:
 						sortedProsesses = from p in _processes
-										orderby p.Id
+										  orderby p.Id
 										select p;
 						break;
 					case 1:

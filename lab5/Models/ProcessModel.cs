@@ -1,8 +1,7 @@
 ﻿
-
-using EO.Internal;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KMA.ProgrammingInCSharp2020.Lab5.Models
@@ -10,6 +9,9 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
     class ProcessModel
     {
         #region Fields
+        private PerformanceCounter _ramCounter;
+        private PerformanceCounter _cpuCounter;
+       // private static PerformanceCounter _deviceRam = new PerformanceCounter("Mono Memory", "Total Physical Memory");
         private Process _currentProcess;
         private int _id;
         private string _name;
@@ -159,7 +161,18 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
         internal ProcessModel(Process process)
         {
             CurrentProcess = process;
-            Name = CurrentProcess .ProcessName;
+            Name = CurrentProcess.ProcessName;
+            try { 
+            _ramCounter = new PerformanceCounter("Process", "Working Set - Private", _name);
+            }
+            catch { }
+            try
+            {
+                _cpuCounter = new PerformanceCounter("Process", "% Processor Time", _name, true);
+                _cpuCounter.NextValue();
+            }
+            catch { }
+
             Id = CurrentProcess .Id;
             IsActive = CurrentProcess.Responding;
             try
@@ -180,29 +193,23 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
                 Path = "N/A";
             }
             User = Environment.UserName;
-            Ram = CurrentProcess.WorkingSet64 / 1024f / 1024f;
-            Task.Run(() => CpuUsageForProcess()).Wait();
-
-        }
-        private async void CpuUsageForProcess()
-        {
             try
             {
-               DateTime startTime = DateTime.UtcNow;
-              TimeSpan startCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
-                await Task.Delay(500);
-
-                DateTime endTime = DateTime.UtcNow;
-                TimeSpan endCpuUsage = Process.GetCurrentProcess().TotalProcessorTime;
-                double cpuUsedMs = (endCpuUsage - startCpuUsage).TotalMilliseconds;
-                double totalMsPassed = (endTime - startTime).TotalMilliseconds;
-                double cpuUsageTotal = cpuUsedMs / (Environment.ProcessorCount * totalMsPassed);
-                Cpu = cpuUsageTotal * 100;
+               
+               // Thread.Sleep(100);
+                Cpu = _cpuCounter.NextValue() / Environment.ProcessorCount;
             }
-            catch
+            catch {}
+            try
             {
+                Ram = (float)Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
+                //RamPercent = (float)Math.Round(((double)(_ramCounter.RawValue) / _deviceRam.RawValue) * 100, 1);
             }
+            catch { }
+           // RamPercent = Ram * 100 / (DeviceRAM/1024/1024);
+
         }
+        
         internal async void Refresh()
         {
              try
@@ -216,10 +223,10 @@ namespace KMA.ProgrammingInCSharp2020.Lab5.Models
              try
              {
 
-               CpuUsageForProcess();
+              // CpuUsageForProcess();
              }
              catch { }
-            Ram = CurrentProcess.WorkingSet64 / 1024f / 1024f;
+           // Ram = (float)Math.Round(((double)(_ramCounter.RawValue) / 1024 / 1024), 1);
             IsActive = CurrentProcess.Responding;
             Threads = CurrentProcess.Threads.Count;
 
